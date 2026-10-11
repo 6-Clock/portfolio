@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# TripoSplat model weights (multi-GB, regenerated locally, never committed)
+ckpts/
+
+# Reference materials and source illustrations — kept in the repo working tree
+# for provenance but never deployed. Excluded from the bundle via Vite (they
+# live outside src/ and public/), and ignored here so they are not pushed.
+references/
+information.md
+
+# Editor / OS
+.DS_Store
+*.local
+.vscode/
+.gstack/
+
+# Vercel CLI (local project link)
+.vercel/
+
+# Env — real values live here locally and in the host's env; never committed.
+# .env.example is the committed template.
+.env
+.env.*
+!.env.example

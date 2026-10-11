@@ -1,0 +1,397 @@
+:root {
+  --bg: #0a0a0b;
+  --ink: #f4f2ee;
+  --muted: #8a8a8f;
+  --hero-bg: #060607;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.4;
+}
+
+/* ---- Hero ---- */
+.hero {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  background: var(--hero-bg);
+  overflow: hidden;
+  /* Dragging the lotus should never select the overlaid title text. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The live splat canvas and the static fallback share this frame. */
+.hero__stage {
+  position: absolute;
+  inset: 0;
+}
+
+.hero__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Faded in by the Hero once the splat is ready (ticket 03). */
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  touch-action: none;
+  cursor: grab;
+}
+
+.hero__canvas.is-ready {
+  opacity: 1;
+}
+
+.hero__canvas:active {
+  cursor: grabbing;
+}
+
+.hero__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--hero-bg);
+}
+
+/* The per-viewpoint Placard. Placement depends on its kind: the Name headline
+   sits top-right; the prose cards (About me / What I do) are a white square.
+   Ticket 02 swaps contents + modifier on each step and crossfades via opacity. */
+.hero__placard {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+/* Name headline: top-left, below the top label row, left-aligned, always on a
+   single line (no max-width constraint so it never wraps). */
+.hero__placard--name {
+  top: clamp(3.25rem, 9vh, 5.5rem);
+  left: clamp(1.5rem, 5vw, 3rem);
+  text-align: left;
+}
+
+/* Prose block: anchored top-left, matching the name headline's top offset,
+   white text directly over the dark hero (no card background). */
+.hero__placard--prose {
+  top: clamp(3.25rem, 9vh, 5.5rem);
+  left: clamp(1.5rem, 5vw, 3rem);
+  max-width: min(42ch, 80vw);
+  color: var(--ink);
+}
+
+.hero__placard-name {
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+  mix-blend-mode: difference;
+  /* Keep the headline on a single line, as in the reference. */
+  white-space: nowrap;
+}
+
+/* Prose heading: a large, bold title above the body copy. No outline box. */
+.hero__placard-title {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.hero__placard-body {
+  margin-top: 0.75rem;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+/* Static corner chrome: location (top-right), wordmark (bottom-left),
+   contact trigger (bottom-right). They share the small letter-spaced label. */
+.hero__location,
+.hero__wordmark,
+.hero__contact-trigger {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.hero__location {
+  position: absolute;
+  top: clamp(1.5rem, 5vh, 3rem);
+  right: clamp(1.5rem, 5vw, 3rem);
+  z-index: 2;
+  /* Bold white, larger, stacked one row per line, right-aligned. */
+  color: var(--ink);
+  font-size: clamp(1rem, 2.2vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: right;
+  pointer-events: none;
+}
+
+.hero__location-row {
+  display: block;
+}
+
+.hero__wordmark {
+  position: absolute;
+  left: clamp(1.5rem, 5vw, 3rem);
+  bottom: 1.5rem;
+  z-index: 2;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.hero__contact {
+  position: absolute;
+  right: clamp(1.5rem, 5vw, 3rem);
+  bottom: 1.5rem;
+  z-index: 3;
+  /* Trigger pinned at the bottom; the menu stacks above it (column-reverse) so
+     options don't run off the bottom edge, while each still eases downward in. */
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.hero__contact-trigger {
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  /* Larger + bold so the contact CTA reads as the dominant corner action. */
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+/* The three options sit above the trigger and drop downward on open. Hidden and
+   non-interactive until `.is-open`; each option is nudged up + faded, then
+   released with a short per-item stagger so they cascade downward. */
+.hero__contact-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.hero__contact-opt {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: right;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.hero__contact.is-open .hero__contact-opt {
+  opacity: 0.8;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.hero__contact.is-open .hero__contact-opt:nth-child(1) {
+  transition-delay: 0.02s;
+}
+.hero__contact.is-open .hero__contact-opt:nth-child(2) {
+  transition-delay: 0.07s;
+}
+.hero__contact.is-open .hero__contact-opt:nth-child(3) {
+  transition-delay: 0.12s;
+}
+
+.hero__contact-opt:hover,
+.hero__contact-opt:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.hero__scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Viewpoint navigation: a chevron pinned to each border, plus a name label. */
+.hero__vp-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(2.5rem, 5vw, 3.5rem);
+  height: clamp(4rem, 12vh, 7rem);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.hero__vp-btn:hover,
+.hero__vp-btn:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.hero__vp-btn--prev {
+  left: 0;
+}
+
+.hero__vp-btn--next {
+  right: 0;
+}
+
+.hero__vp-name {
+  position: absolute;
+  top: clamp(1.5rem, 5vh, 3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ---- Content layer ---- */
+/* <main> is the white content surface below the Hero. */
+main {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  color: #0a0a0b;
+}
+
+/* ---- Content sections ---- */
+.section {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: clamp(4rem, 12vh, 9rem) clamp(1.5rem, 5vw, 3rem);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.section:first-of-type {
+  border-top: none;
+}
+
+.section__label {
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.section__heading {
+  margin-top: 0.75rem;
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.section__placeholder {
+  margin-top: 1.25rem;
+  color: var(--muted);
+  max-width: 48ch;
+}
+
+/* ---- Hero: narrow-viewport reflow ---- */
+/* Pinned corners would collide on a phone, so the chrome flows into a readable
+   vertical stack over the splat/fallback. The side arrows stay as overlay
+   controls; the contact control becomes a tap-toggle (ticket 03). CSS-only. */
+@media (max-width: 640px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(1.25rem, 6vh, 2rem) clamp(1.25rem, 6vw, 2rem);
+    gap: 1rem;
+  }
+
+  .hero__vp-name,
+  .hero__location,
+  .hero__placard,
+  .hero__wordmark,
+  .hero__contact,
+  .hero__scroll-hint {
+    position: static;
+    transform: none;
+    inset: auto;
+    max-width: 100%;
+  }
+
+  .hero__vp-name {
+    order: 1;
+  }
+  .hero__location {
+    order: 2;
+  }
+  .hero__placard {
+    order: 3;
+    margin: auto 0;
+  }
+  .hero__wordmark {
+    order: 4;
+  }
+  .hero__contact {
+    order: 5;
+  }
+  .hero__scroll-hint {
+    order: 6;
+    align-self: center;
+  }
+
+  .hero__placard-name {
+    font-size: clamp(2.5rem, 14vw, 4rem);
+  }
+}
